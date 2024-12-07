@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Sales List{% endblock %}
+
+{% block content %}
+<h1>Sales List</h1>
+
+<div class="container-fluid">
+
+    <!-- Page Heading -->
+    <h1 class="h3 mb-2 text-gray-800">Sales List</h1>
+    <p class="mb-4">Below is the list of all sales made in the system.</p>
+
+    <!-- DataTales Example -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Sales Table</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                  <thead>
+                    <tr>
+                        <th>Sale ID</th>
+                        <th>Customer Name</th>
+                        <th>Product Name</th>
+                        <th>Quantity</th>
+                        <th>Total Price for Product</th>
+                        <th>Total Sale Price</th>
+                        <th>Sale Date</th>
+                        <th>Is Confirmed</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th>Sale ID</th>
+                        <th>Customer Name</th>
+                        <th>Product Name</th>
+                        <th>Quantity</th>
+                        <th>Total Price for Product</th>
+                        <th>Total Sale Price</th>
+                        <th>Sale Date</th>
+                        <th>Is Confirmed</th>
+                        <th>Actions</th>
+                    </tr>
+                </tfoot>
+                <tbody>
+                    {% for sale in sales %}
+                        {% for sale_product in sale.sale_products.all %}
+                            <tr>
+                                {% if forloop.first %}
+                                    <td rowspan="{{ sale.sale_products.count }}">{{ sale.id }}</td>
+                                    <td rowspan="{{ sale.sale_products.count }}">{{ sale.customer_name }}</td>
+                                    <td>{{ sale_product.product.name }}</td>
+                                    <td>{{ sale_product.quantity }}</td>
+                                    <td>Ksh{{ sale_product.total_price }}</td>
+                                    <td rowspan="{{ sale.sale_products.count }}">
+                                        Ksh{{ sale.total_price }}
+                                    </td>
+                                    <td rowspan="{{ sale.sale_products.count }}">{{ sale.sale_date }}</td>
+
+                                    <!-- Display the value of is_confirmed only once for the entire sale -->
+                                    <td rowspan="{{ sale.sale_products.count }}">
+                                        {% if sale.is_confirmed %}
+                                            <span class="badge badge-success">Confirmed</span>
+                                        {% else %}
+                                            <span class="badge badge-danger">Not Confirmed</span>
+                                        {% endif %}
+                                    </td>
+                                {% else %}
+                                    <td>{{ sale_product.product.name }}</td>
+                                    <td>{{ sale_product.quantity }}</td>
+                                    <td>Ksh{{ sale_product.total_price }}</td>
+                                {% endif %}
+                                
+                                <!-- Action buttons (only for the first product in each sale) -->
+                                {% if forloop.first %}
+                                <td>
+                                    <a href="{% url 'edit_sale' sale.id %}" class="btn btn-warning btn-sm">Edit</a>
+                                    <a href="{% url 'delete_sale' pk=sale.pk object_type='sale' %}" class="btn btn-danger btn-sm">Delete Sale</a>
+
+                                    
+                                    {% if not sale.is_confirmed %}
+                                        <a href="{% url 'confirm_sale' sale.id %}" class="btn btn-primary btn-sm">Confirm Sale</a>
+                                    {% endif %}
+
+                                    {% if sale.is_confirmed %}
+                                        <a href="{% url 'print_sale' sale.id %}" class="btn btn-success btn-sm" target="_blank">Print</a>
+                                    {% endif %}
+                                </td>
+                                {% else %}
+                                    <td></td> <!-- Empty cell for other rows -->
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+                </table>
+                <a href="{% url 'add_sale' %}"  class="btn btn-primary">Add New Sale</a>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /.container-fluid -->
+
+{% endblock %}

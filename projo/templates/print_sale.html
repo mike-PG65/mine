@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sale Receipt</title>
+
+    <style>
+        /* General Page Layout */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h2, h3, h4 {
+            margin: 0;
+            padding: 10px 0;
+            color: #333;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        /* Table Styling */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        .table th {
+            background-color: #f2f2f2;
+            color: #555;
+        }
+
+        .table td {
+            font-size: 14px;
+        }
+
+        .table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        hr {
+            border: 1px solid #ddd;
+            margin: 20px 0;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        /* Button Container */
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        /* Print Styling */
+        @media print {
+            /* Hide elements that shouldn't appear in the print version */
+            button, .button-container {
+                display: none;
+            }
+
+            /* Ensure all content is visible when printed */
+            body * {
+                visibility: visible;
+            }
+
+            /* Only the content of interest should be visible */
+            #business-details, 
+            #sale-date-time,
+            #customer-details, 
+            table, 
+            table th, 
+            table td, 
+            #total-price,
+            #thank-you-message {
+                visibility: visible;
+            }
+
+            /* Remove margins around the page for a clean print */
+            @page {
+                margin: 0;
+                padding: 0;
+            }
+
+            /* Ensure content starts at the top of the page */
+            .container {
+                padding-top: 0;
+                margin: 0; /* Ensure no extra margin is applied */
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Business Details (visible for print) -->
+    <div id="business-details" class="text-center">
+        <h2> Seasons Hardware </h2>
+        <p><strong>Location:</strong> Tom Mboya St, Nairobi, Nairobi County </p>
+        <p><strong>Contact:</strong> 0712345678 </p>
+    </div>
+    
+    <hr>
+    
+    <!-- Sale Date and Time (real-time) -->
+    <div id="sale-date-time">
+        <p><strong>Sale Date:</strong> {{ sale.sale_date|date:"Y-m-d" }}</p>
+        <p><strong>Sale Time:</strong> {{ sale.sale_date|date:"H:i:s" }}</p>
+    </div>
+    
+    <hr>
+
+    <!-- Customer Details -->
+    <div id="customer-details">
+        <h3>Customer Name: {{ sale.customer_name }}</h3>
+    </div>
+
+    <hr>
+
+    <!-- Product Details -->
+    <h4>Products Sold to {{ sale.customer_name }}:</h4>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Product Name</th>
+                <th>Quantity</th>
+                <th>Total Price for Product</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sale_product in sale_products %}
+            <tr>
+                <td>{{ sale_product.product.name }}</td>
+                <td>{{ sale_product.quantity }}</td>
+                <td>Ksh{{ sale_product.total_price }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Display the Total Sale Price -->
+    <div id="total-price" class="text-right">
+        <h4>Total Price: Ksh{{ total_price }}</h4>
+    </div>
+    
+    <hr>
+
+    <!-- Thank You Message -->
+    <div id="thank-you-message" class="text-center">
+        <p><strong>Thank you for shopping with us!</strong></p>
+        <p>We appreciate your business and hope to serve you again soon!</p>
+    </div>
+
+    <!-- Button Container with Centering -->
+    <div class="button-container">
+        <!-- Button to trigger print (visible only on screen) -->
+        <button onclick="printPage()" class="btn btn-success btn-sm">Print this page</button>
+
+        <!-- Back Button -->
+        <button onclick="goBack()" class="btn btn-secondary btn-sm">Go Back</button>
+    </div>
+</div>
+
+<script>
+    function printPage() {
+        // Print the page
+        window.print();
+    }
+
+    function goBack() {
+        // Go back to the previous page
+        window.history.back();
+    }
+</script>
+
+</body>
+</html>

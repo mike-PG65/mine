@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Confirmation{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <h2>Are you sure you want to delete this {{ object_type }}?</h2>
+
+    <form method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete</button>
+      <a href="{% url 'sale_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+
+    <p><strong>{{ object_type | title }} Details:</strong></p>
+    <ul>
+      <li><strong>ID:</strong> {{ object.id }}</li>
+      {% if object_type == 'sale' %}
+        <li><strong>Customer:</strong> {{ object.customer_name }}</li>
+        <li><strong>Total Price:</strong> {{ object.total_price }}</li>
+        <li><strong>Sale Date:</strong> {{ object.sale_date }}</li>
+      {% elif object_type == 'inventory' %}
+        <li><strong>Item Name:</strong> {{ object.name }}</li>
+        <li><strong>Price:</strong> {{ object.price }}</li>
+        <li><strong>Quantity:</strong> {{ object.quantity }}</li>
+      {% endif %}
+    </ul>
+  </div>
+{% endblock %}

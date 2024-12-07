@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if supplier %}
+        Edit Supplier
+    {% else %}
+        Add Supplier
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+
+    <h1>{% if supplier %}Edit Supplier {{ supplier.first_name }} {{ supplier.last_name }}{% else %}Add Supplier{% endif %}</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="container">
+            <!-- Row 1: First Name and Last Name -->
+            <div class="row">
+              <!-- First Name -->
+              <div class="col-md-6">
+                <div class="form-floating mb-3">
+                  <input type="text" class="form-control" id="floatingFirstName" name="first_name" value="{% if supplier %}{{ supplier.first_name }}{% else %} {% endif %}">
+                  <label for="floatingFirstName">First Name</label>
+                </div>
+              </div>
+          
+              <!-- Last Name -->
+              <div class="col-md-6">
+                <div class="form-floating mb-3">
+                  <input type="text" name="last_name" class="form-control" id="floatingLastName" value="{% if supplier %}{{ supplier.last_name }}{% else %}{% endif %}">
+                  <label for="floatingLastName">Last Name</label>
+                </div>
+              </div>
+            </div>
+          
+            <!-- Row 2: Product and Phone -->
+            <div class="row">
+              <!-- Product -->
+              <div class="col-md-6">
+                <div class="form-floating mb-3">
+                  <select name="product" class="form-control" id="floatingProduct">
+                    <option value="" {% if not supplier.product %}selected{% endif %}>Select Product</option>
+                    {% for product in products %}
+                        <option value="{{ product.id }}" {% if supplier and supplier.product.id == product.id %}selected{% endif %}>
+                            {{ product.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+                
+                
+                    <label for="floatingProduct">Product</label>
+                </div>
+            </div>
+          
+              <!-- Phone -->
+              <div class="col-md-6">
+                <div class="form-floating mb-3">
+                  <input type="text" name="phone" class="form-control" id="floatingPhone" value="{% if supplier %}{{ supplier.phone }}{% else %}{% endif %}">
+                  <label for="floatingPhone">Phone</label>
+                </div>
+              </div>
+            </div>
+          
+            <!-- Row 3: Email -->
+            <div class="row">
+              <!-- Email -->
+              <div class="col-md-6">
+                <div class="form-floating mb-3">
+                  <input type="email" name="email" class="form-control" id="floatingEmail" value="{% if supplier %}{{ supplier.email }}{% else %}{% endif %}">
+                  <label for="floatingEmail">Email</label>
+                </div>
+              </div>
+            </div>
+        </div>
+          
+      <div class="col-12">
+        <button class="btn btn-primary" type="submit">{% if supplier %}Save Changes{% else %}Add Supplier{% endif %}</button>
+        <a href="{% url 'supplier_list' %}" class="btn btn-primary" type="submit">Back to Supplier List</a>
+      </div>
+    
+    </form>
+
+{% endblock %}

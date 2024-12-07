@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+    <div class="col-md-6">
+      <h2 class="my-4 text-center">Edit Profile</h2>
+      <form method="POST">
+        {% csrf_token %}
+        
+        <!-- First Name Field -->
+        <div class="row mb-3">
+          <div class="col-12">
+            <label for="first_name" class="form-label">First Name:</label>
+            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ profile.first_name }}" required>
+          </div>
+        </div>
+
+        <!-- Last Name Field -->
+        <div class="row mb-3">
+          <div class="col-12">
+            <label for="last_name" class="form-label">Last Name:</label>
+            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ profile.last_name }}" required>
+          </div>
+        </div>
+
+        <!-- Username Field -->
+        <div class="row mb-3">
+          <div class="col-12">
+            <label for="username" class="form-label">Username:</label>
+            <input type="text" class="form-control" id="username" name="username" value="{{ profile.username }}" required>
+          </div>
+        </div>
+
+        <!-- Password Field -->
+        <div class="row mb-3">
+          <div class="col-12">
+            <label for="password" class="form-label">Password:</label>
+            <input type="password" class="form-control" id="password" name="password">
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="row">
+          <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary">Update Profile</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
