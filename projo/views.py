@@ -21,53 +21,63 @@ from django.db import transaction
 
 # login register urls
 
+
 def register(request):
     if request.method == 'POST':
         # Get the data from the POST request
         first_name = request.POST['firstname']
         last_name = request.POST['lastname']
         username = request.POST['username']
+        email = request.POST['email']  # New email field
         password = request.POST['password']
         confirm_password = request.POST['confirm_password']
 
+        # First Name and Last Name Validation (letters only)
         if not re.match(r'^[a-zA-Z\s]*$', first_name):
-            messages.error(request, "First Name and Last name  should only contain letters.")
+            messages.error(request, "First Name should only contain letters.")
             return redirect(request.path)  # Re-render the form with the error message
 
         if not re.match(r'^[a-zA-Z\s]+$', last_name):
-            messages.error(request, "First Name and Last name should only contain letters.")
+            messages.error(request, "Last Name should only contain letters.")
             return redirect(request.path)  # Re-render the form with the error message
 
+        # Email Validation (simple check for format)
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            messages.error(request, "Please enter a valid email address.")
+            return redirect(request.path)
 
-        # Check if passwords match
-        if password != confirm_password:
-            messages.error(request, "Password and Confirm Password do not match.")
-            return render(request, 'register.html')
+        # Check if the email already exists
+        if get_user_model().objects.filter(email=email).exists():
+            messages.error(request, "Email already exists. Please choose another one.")
+            return redirect(request.path)
 
         # Check if the username already exists
         if get_user_model().objects.filter(username=username).exists():
             messages.error(request, "Username already exists. Please choose another one.")
-            return render(request, 'register.html')
+            return redirect(request.path)
+
+        # Check if passwords match
+        if password != confirm_password:
+            messages.error(request, "Password and Confirm Password do not match.")
+            return redirect(request.path)  # Re-render the form with the error message
 
         # Additional password strength check (optional)
         if len(password) < 8:
             messages.error(request, "Password must be at least 8 characters long.")
-            return render(request, 'register.html')
+            return redirect(request.path)
 
         # Create the user if all checks pass
         user = get_user_model()
-        new_user = user(first_name=first_name, last_name=last_name, username=username)
+        new_user = user(first_name=first_name, last_name=last_name, username=username, email=email)
         new_user.password = make_password(password)  # Hash the password before saving
         new_user.save()
 
         messages.success(request, "Registration successful! You can now log in.")
-        return redirect('register')  # Redirect to the login page after successful registration
+        return redirect('login')  # Redirect to the login page after successful registration
 
     return render(request, 'register.html')
 
-
 def login(request):
-    # If the user is already authenticated, allow them to log in again (optional)
     if request.user.is_authenticated:
         logout(request)  # Log out the current user before allowing login again (optional)
 
@@ -81,10 +91,10 @@ def login(request):
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
-        
+
         # Authenticate the user by searching for a user with the provided username and password
         user = authenticate(request, username=username, password=password)
-        
+
         if user is not None:
             auth_login(request, user)  # Log the user in
             messages.success(request, "Login successful!")  # Display a success message
@@ -93,11 +103,10 @@ def login(request):
         else:
             # If authentication fails, render the login page with an error message
             messages.error(request, "Invalid username or password. Please try again.")
-            return render(request, 'login.html')
+            return render(request, 'registration/login.html')  # Make sure this points to the correct path
 
     # If GET request, render the login page
-    return render(request, 'login.html')
-
+    return render(request, 'registration/login.html')  # Ensure the path is correct here as well
 
 @login_required
 def edit_profile(request):
@@ -139,9 +148,10 @@ def edit_profile(request):
 
 
 def logout(request):
+    print(request.user.is_authenticated)  # Debugging: Check if the user is authenticated
     auth_logout(request)
     messages.success(request, "You have been logged out successfully.")
-    return redirect('login')  
+    return redirect('login')
 
 
 
@@ -848,6 +858,89 @@ def view_sales(request):
    
 
 #     return render(request, 'sale_list.html', {'sale_details': sale_details})
+
+
+# forgot password view
+
+def forgot_password(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        email = data.get('email')
+        
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return JsonResponse({"error": "User with this email doesn't exist"}, status=400)
+
+        # Generate token
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(str(user.id).encode())
+
+        # Get current domain (useful for sending the URL in the email)
+        current_site = get_current_site(request)
+        reset_link = f"http://{current_site.domain}/reset-password/{uid}/{token}"
+
+        # Send email with the password reset link
+        subject = "Password Reset Request"
+        message = render_to_string(
+            "accounts/password_reset_email.html",  # Create a template for the email
+            {"reset_link": reset_link, "user": user}
+        )
+        send_mail(subject, message, settings.EMAIL_HOST_USER, [email])
+
+        return JsonResponse({"message": "Password reset link sent to your email."}, status=200)
+    
+    return JsonResponse({"error": "Invalid request method."}, status=400)
+
+
+
+# accounts/views.py
+# from django.contrib.auth.tokens import default_token_generator
+# from django.contrib.auth import get_user_model
+# from django.http import JsonResponse
+# from django.contrib.auth.forms import PasswordChangeForm
+
+def reset_password(request, uidb64, token):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        new_password = data.get('new_password')
+
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = get_user_model().objects.get(id=uid)
+        except (TypeError, ValueError, User.DoesNotExist):
+            return JsonResponse({"error": "Invalid user or token"}, status=400)
+
+        # Check if the token is valid
+        if not default_token_generator.check_token(user, token):
+            return JsonResponse({"error": "Invalid or expired token"}, status=400)
+
+        # Set the new password
+        user.set_password(new_password)
+        user.save()
+
+        return JsonResponse({"message": "Password successfully reset."}, status=200)
+
+    return JsonResponse({"error": "Invalid request method."}, status=400)
+
+
+
+
+from django.urls import reverse_lazy
+from .forms import CustomPasswordResetForm, CustomSetPasswordForm
+from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
+
+class CustomPasswordResetView(PasswordResetView):
+    form_class = CustomPasswordResetForm
+    template_name = 'registration/password_reset_form.html'  # Your custom template for the form
+    email_template_name = 'registration/password_reset_email.html'  # Customize the email
+    subject_template_name = 'registration/password_reset_subject.txt'
+    success_url = reverse_lazy('password_reset_done')  # Redirect after password reset request
+
+class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+    form_class = CustomSetPasswordForm
+    template_name = 'registration/password_reset_confirm.html'  # Your custom template for reset confirmation
+    success_url = reverse_lazy('password_reset_complete')  # Redirect after successful password reset
 
 
 
