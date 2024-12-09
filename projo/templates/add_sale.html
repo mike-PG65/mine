@@ -26,7 +26,12 @@
             <div class="col-md-6">
                 <div class="form-floating mb-3">
                     <input type="date" name="sale_date" class="form-control" id="sale_date" 
-                           {% if sale %} value="{{ sale.sale_date|date:'Y-m-d' }}" {% endif %} required>
+                           {% if sale and sale.sale_date %} 
+                               value="{{ sale.sale_date|date:'Y-m-d' }}" 
+                           {% else %}
+                               value="{{ today|date:'Y-m-d' }}"
+                           {% endif %} 
+                           required>
                     <label for="floatingSaleDate">Sale Date</label>
                 </div>
             </div>

@@ -198,7 +198,9 @@
         <button onclick="printPage()" class="btn btn-success btn-sm">Print this page</button>
 
         <!-- Back Button -->
-        <button onclick="goBack()" class="btn btn-secondary btn-sm">Go Back</button>
+        <a href="{% url 'sale_list' %}">
+            <button class="btn btn-secondary btn-sm">Go Back</button>
+        </a>
     </div>
 </div>
 

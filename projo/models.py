@@ -3,20 +3,20 @@ from jsonfield import JSONField
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 
-class Register(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
-    first_name = models.CharField(max_length=50)
-    last_name = models.CharField(max_length=50)
-    username = models.CharField(max_length=50, default='default_username')  # Ensure email is unique
-    email = models.EmailField(max_length=254, unique=True, default='', blank=False)  # Email field
-    password = models.CharField(max_length=128)  # Storing the hashed password
+# class Register(models.Model):
+#     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
+#     first_name = models.CharField(max_length=50)
+#     last_name = models.CharField(max_length=50)
+#     username = models.CharField(max_length=50, default='default_username')  # Ensure email is unique
+#     email = models.EmailField(max_length=254, unique=True, default='', blank=False)  # Email field
+#     password = models.CharField(max_length=128)  # Storing the hashed password
 
-    def set_password(self, raw_password):
-        # Hash the password before saving
-        self.password = make_password(raw_password)
+#     def set_password(self, raw_password):
+#         # Hash the password before saving
+#         self.password = make_password(raw_password)
 
-    def __str__(self):
-        return f'{self.first_name} {self.last_name}'
+#     def __str__(self):
+#         return f'{self.first_name} {self.last_name}'
 
 
 class Inventory(models.Model):

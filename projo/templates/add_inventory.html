@@ -4,73 +4,130 @@
     {% if item %}
         Edit Inventory Item
     {% else %}
-        Add Inventory Item
+        Add Inventory Items
     {% endif %}
 {% endblock %}
 
-
 {% block content %}
 
-    <h1>{% if item %}Edit item {{item.name}} {% else %}Add new Inventory{% endif %}</h1>
+<h1>{% if item %}Edit item {{ item.name }} {% else %}Add new Inventory{% endif %}</h1>
 
-    <form method="POST">
-        {% csrf_token %}
-        <div class="container">
-            <!-- Row 1: Item Name and Stock Quantity -->
-            <div class="row">
-              <!-- Item Name -->
-              <div class="col-md-6">
-                <div class="form-floating mb-3">
-                  <input type="text" class="form-control" id="floatingInputDisabled" name="name" value="{% if item %}{{ item.name }}{% else %} {% endif %}">
-                  <label for="floatingInputDisabled">Item Name</label>
-                </div>
-              </div>
-          
-              <!-- Stock Quantity -->
-              <div class="col-md-6">
-                <div class="form-floating mb-3">
-                  <input type="number" name="quantity" class="form-control" id="floatingInputQuantity" value="{% if item %}{{ item.quantity }}{% else %}{% endif %}">
-                  <label for="floatingInputQuantity">Stock Quantity</label>
-                </div>
-              </div>
-            </div>
-          
-            <!-- Row 2: Price and Stock Location -->
-            <div class="row">
-              <!-- Price -->
-              <div class="col-md-6">
-                <div class="form-floating mb-3">
-                  <input type="number" name="price" class="form-control" id="floatingInputPrice" value="{% if item %}{{ item.price }}{% else %}''{% endif %}">
-                  <label for="floatingInputPrice">Price</label>
-                </div>
-              </div>
-          
-              <!-- Stock Location -->
+<form method="POST">
+    {% csrf_token %}
+    <div class="container">
+        <div id="inventory-items">
+            {% if item %}
+                <!-- Editing an existing item -->
+                <div class="inventory-item">
+                    <div class="row">
+                        <!-- Item Name -->
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" name="name[]" placeholder="Item Name" value="{{ item.name }}">
+                                <label>Item Name</label>
+                            </div>
+                        </div>
 
-              <div class="col-md-6">
-                <div class="form-floating mb-3">
-                    <select name="stock_location" class="form-control" id="floatingProduct">
-                        <option value="" {% if not item.stock_location %}selected{% endif %}>Select Location</option>
-                        <option value="Store c1" {% if item and item.stock_location == 'Store c1' %}selected{% endif %}>Store c1</option>
-                        <option value="Mega Store" {% if item and item.stock_location == 'Mega Store' %}selected{% endif %}>Mega Store</option>
-                        <option value="Back Store" {% if item and item.stock_location == 'Back Store' %}selected{% endif %}>Back Store</option>
-                        <!-- Add more product options here as needed -->
-                    </select>
-                    <label for="floatingProduct">Product</label>
-                </div>
-            </div>
+                        <!-- Stock Quantity -->
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="number" name="quantity[]" class="form-control" placeholder="Stock Quantity" value="{{ item.quantity }}">
+                                <label>Stock Quantity</label>
+                            </div>
+                        </div>
+                    </div>
 
-            </div>
-          </div>
-          
-      <!-- <button type="submit">{% if item %}Save Changes{% else %}Add Item{% endif %}</button> -->
-      <div class="col-12">
-        <button class="btn btn-primary" type="submit">{% if item %}Save Changes{% else %}Add Item{% endif %}</button>
-        <a href="{% url 'inventory_list' %}" class="btn btn-primary" type="submit">Back to Inventory List</a>      
-      </div>
-    
-    </form>
-    
-  
+                    <div class="row">
+                        <!-- Price -->
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="number" name="price[]" class="form-control" placeholder="Price" value="{{ item.price }}">
+                                <label>Price</label>
+                            </div>
+                        </div>
+
+                        <!-- Stock Location -->
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <select name="stock_location[]" class="form-control">
+                                    <option value="Store c1" {% if item.stock_location == 'Store c1' %}selected{% endif %}>Store c1</option>
+                                    <option value="Mega Store" {% if item.stock_location == 'Mega Store' %}selected{% endif %}>Mega Store</option>
+                                    <option value="Back Store" {% if item.stock_location == 'Back Store' %}selected{% endif %}>Back Store</option>
+                                    <!-- Add more product options here as needed -->
+                                </select>
+                                <label for="floatingProduct">Stock Location</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Add new items -->
+                <div class="inventory-item">
+                    <div class="row">
+                        <!-- Item Name -->
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" name="name[]" placeholder="Item Name">
+                                <label>Item Name</label>
+                            </div>
+                        </div>
+
+                        <!-- Stock Quantity -->
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="number" name="quantity[]" class="form-control" placeholder="Stock Quantity">
+                                <label>Stock Quantity</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Price -->
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="number" name="price[]" class="form-control" placeholder="Price">
+                                <label>Price</label>
+                            </div>
+                        </div>
+
+                        <!-- Stock Location -->
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <select name="stock_location[]" class="form-control">
+                                    <option value="">Select Location</option>
+                                    <option value="Store c1">Store c1</option>
+                                    <option value="Mega Store">Mega Store</option>
+                                    <option value="Back Store">Back Store</option>
+                                </select>
+                                <label for="floatingProduct">Stock Location</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-12">
+            <button class="btn btn-primary" type="submit">
+                {% if item %}Save Changes{% else %}Add Items{% endif %}
+            </button>
+            <a href="{% url 'inventory_list' %}" class="btn btn-primary">Back to Inventory List</a>
+        </div>
+
+        <div class="col-12 mt-3">
+            <button type="button" class="btn btn-secondary" id="add-more-item">Add More Item</button>
+        </div>
+    </div>
+</form>
+
+<script>
+    // Event listener for adding more items dynamically
+    document.getElementById('add-more-item').addEventListener('click', function() {
+        // Clone the first inventory item div and append to the container
+        const inventoryItem = document.querySelector('.inventory-item');
+        const clone = inventoryItem.cloneNode(true);
+        document.getElementById('inventory-items').appendChild(clone);
+    });
+</script>
+
 {% endblock %}
-

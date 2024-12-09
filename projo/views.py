@@ -3,14 +3,13 @@ from django.contrib.auth import authenticate, login as auth_login, logout as aut
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
-from .models import Inventory
+from .models import Inventory, Supplier, Sale, SaleProduct
 from django.contrib.auth.decorators import login_required
-from . models import Register
+
 import re
 import json
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
-from .models import Supplier, Sale, SaleProduct
 from weasyprint import HTML
 from django.db import transaction
 
@@ -162,73 +161,198 @@ def index(request):
     #inventory urls
 
 
+# def add_inventory(request, pk=None):
+#     # Check if the item is being edited or a new item is being added
+#     if pk:
+#         item = get_object_or_404(Inventory, pk=pk)
+#         is_editing = True  # Indicates we're editing an existing item
+#     else:
+#         item = None
+#         is_editing = False  # Indicates we're adding a new item
+
+#     if request.method == 'POST':
+#         name = request.POST.get('name')
+#         stock_location = request.POST.get('stock_location')
+#         quantity = request.POST.get('quantity')
+#         price = request.POST.get('price')
+
+#         # Check if all fields are filled
+#         if not name or not stock_location or not quantity or not price:
+#             messages.error(request, "All fields are required.")
+#             return redirect(request.path)
+
+#         # Validate that the name contains only letters (no numbers or special characters)
+#         if not re.match(r'^[a-zA-Z\s]*$', name):
+#             messages.error(request, "Name should only contain letters and spaces.")
+#             return redirect(request.path)
+
+#         # Validate that price and quantity are positive numbers
+#         if not quantity.isdigit() or int(quantity) <= 0:
+#             messages.error(request, "Quantity should not be a negative number or 0.")
+#             return redirect(request.path)
+
+#         if not price.replace('.', '', 1).isdigit() or float(price) <= 0:
+#             messages.error(request, "Price should not be a negative number or 0.")
+#             return redirect(request.path)
+
+#         # Convert to appropriate data types
+#         quantity = int(quantity)
+#         price = float(price)
+
+#         # If we're adding a new item, check if the item already exists (only for new items, not for editing)
+#         if not is_editing:
+#             existing_item = Inventory.objects.filter(name__iexact=name).first()
+#             if existing_item:
+#                 # Automatically pre-fill the fields with existing data and allow editing
+#                 item = existing_item
+#                 is_editing = True  # Set is_editing to True because we're now editing
+#                 quantity += item.quantity  # Optionally add the existing quantity to the new one
+#                 price = item.price  # Optionally keep the existing price if editing
+#                 messages.info(request, f'Item "{name}" already exists. You can edit it now.')
+
+#                 return render(request, 'add_inventory.html', {'item': item})
+
+    
+
+#         # Update the item if we're editing it
+#         if is_editing:
+#             item.name = name
+#             item.stock_location = stock_location
+#             item.quantity = quantity  # Update the quantity as per the new input
+#             item.price = price  # Update the price
+#             item.save()
+
+#             messages.success(request, f'{item.name} updated successfully.')
+
+#         # If we're not editing and it's a new item, create a new inventory record
+#         else:
+#             Inventory.objects.create(
+#                 name=name,
+#                 stock_location=stock_location,
+#                 quantity=quantity,
+#                 price=price
+#             )
+#             messages.success(request, 'Item added successfully.')
+
+#         return redirect('inventory_list')  # Redirect to the inventory list page
+
+#     # If it's a GET request, render the add_inventory form with existing data if editing
+#     return render(request, 'add_inventory.html', {'item': item})
+
+
+import re
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from .models import Inventory
+
 def add_inventory(request, pk=None):
+    # Check if the item is being edited or a new item is being added
     if pk:
         item = get_object_or_404(Inventory, pk=pk)
+        is_editing = True  # Indicates we're editing an existing item
+        item_names = [item.name]  # List of current item names, used for form population
+        item_quantities = [item.quantity]  # List of current item quantities
+        item_prices = [item.price]  # List of current item prices
+        item_locations = [item.stock_location]  # List of current item stock locations
     else:
         item = None
+        is_editing = False  # Indicates we're adding new items
+        item_names = []
+        item_quantities = []
+        item_prices = []
+        item_locations = []
 
     if request.method == 'POST':
-        name = request.POST.get('name')
-        stock_location = request.POST.get('stock_location')
-        quantity = request.POST.get('quantity')
-        price = request.POST.get('price')
+        # Handle multiple products being added at once
+        names = request.POST.getlist('name[]')  # List of names for multiple products
+        stock_locations = request.POST.getlist('stock_location[]')  # List of stock locations
+        quantities = request.POST.getlist('quantity[]')  # List of quantities
+        prices = request.POST.getlist('price[]')  # List of prices
 
-        # Check if all fields are filled
-        if not name or not stock_location or not quantity or not price:
-            messages.error(request, "All fields are required.")
-            return redirect(request.path)  
+        # Flag to track errors
+        has_error = False
 
-        # Validate that the name contains only letters (no numbers or special characters)
-        if not re.match(r'^[a-zA-Z\s]*$', name):
-            messages.error(request, "Name should only contain letters and spaces.")
-            return redirect(request.path)  # Re-render the form with the error message
+        # Loop through each product and validate and process them
+        for i in range(len(names)):
+            name = names[i]
+            stock_location = stock_locations[i]
+            quantity = quantities[i]
+            price = prices[i]
 
-        # Validate that price and quantity are positive numbers
-        if not quantity.isdigit() or int(quantity) <= 0:
-            messages.error(request, "Quantity should not be a negative number or 0.")
-            return redirect(request.path)  # Re-render the form with the error message
+            # Check if all fields are filled for this product
+            if not name or not stock_location or not quantity or not price:
+                messages.error(request, f"All fields are required for product {i + 1}.")
+                has_error = True
+                continue
 
-        if not price.replace('.', '', 1).isdigit() or float(price) <= 0:
-            messages.error(request, "Price should not be a negative number or 0.")
-            return redirect(request.path)  # Re-render the form with the error message
+            # Validate that the name contains only letters (no numbers or special characters)
+            if not re.match(r'^[a-zA-Z\s]*$', name):
+                messages.error(request, f"Name for product {i + 1} should only contain letters and spaces.")
+                has_error = True
+                continue
 
-        # Convert to appropriate data types
-        quantity = int(quantity)
-        price = float(price)
+            # Validate that quantity is a positive number
+            if not quantity.isdigit() or int(quantity) <= 0:
+                messages.error(request, f"Quantity for product {i + 1} should be a positive number.")
+                has_error = True
+                continue
 
-        # Check if the item already exists (based on the name or another unique field)
-        existing_item = Inventory.objects.filter(name__iexact=name).first()
+            # Validate that price is a positive number
+            if not price.replace('.', '', 1).isdigit() or float(price) <= 0:
+                messages.error(request, f"Price for product {i + 1} should be a positive number.")
+                has_error = True
+                continue
 
-        if existing_item:
-            # Display a message that the item already exists
-            messages.error(request, f'Item "{name}" already exists in the inventory.')
-            return redirect(request.path)  # Re-render the form with the error message
+            # Convert to appropriate data types
+            quantity = int(quantity)
+            price = float(price)
 
-        if item:
-            # If an item is being edited, replace the current quantity with the new one
-            item.name = name
-            item.stock_location = stock_location  # Keep stock location updated if needed
-            item.quantity = quantity  # Replace the existing quantity with the new quantity
-            item.price = price
-            item.save()
+            if is_editing:
+                # If we're editing, update the existing item
+                item.name = name
+                item.stock_location = stock_location
+                item.quantity += quantity
+                item.price = price
+                item.save()
+                messages.success(request, f'Item "{name}" updated successfully.')
+            else:
+                # If we're adding a new item, check if the item already exists
+                existing_item = Inventory.objects.filter(name__iexact=name).first()
+                if existing_item:
+                    # Optionally, add the existing quantity to the new quantity
+                    existing_item.quantity += quantity
+                    existing_item.save()
+                    messages.info(request, f'Item "{name}" already exists. Quantity updated.')
+                else:
+                    # Add a new item if it doesn't exist
+                    Inventory.objects.create(
+                        name=name,
+                        stock_location=stock_location,
+                        quantity=quantity,
+                        price=price
+                    )
+                    messages.success(request, f'Item "{name}" added successfully.')
 
-            messages.success(request, f'{item.name} updated successfully.')
+        # If there were errors, redirect to the same page and show messages
+        if has_error:
+            return redirect(request.path)
 
-        else:
-            # Add a new item if it's not being edited
-            Inventory.objects.create(
-                name=name,
-                stock_location=stock_location,
-                quantity=quantity,
-                price=price
-            )
-            messages.success(request, 'Item added successfully.')
+        # Redirect to inventory list page after successful submission
+        messages.success(request, 'All items have been processed successfully.')
+        return redirect('inventory_list')
 
-        return redirect('inventory_list')  # Redirect to the inventory list page.
+    # If it's a GET request, render the add_inventory form with existing data if editing
+    context = {
+        'item': item,
+        'is_editing': is_editing,
+        'item_names': item_names,
+        'item_quantities': item_quantities,
+        'item_prices': item_prices,
+        'item_locations': item_locations,
+    }
 
-    # Show existing item data when editing or adding an existing item
-    return render(request, 'add_inventory.html', {'item': item})
+    return render(request, 'add_inventory.html', context)
+
 
 
 
@@ -559,6 +683,8 @@ def update_stock(request):
 #         'inventory_items': inventory_items
 #     })
 
+
+
 def add_sale(request, pk=None):
     sale = None  # Default to None for new sale
 
@@ -706,11 +832,23 @@ def add_sale(request, pk=None):
             Q(description__icontains=search_query)
         )
 
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # Respond with a JSON of filtered products
+        product_data = [
+            {
+                'id': product.id,
+                'name': product.name,
+                'price': product.price,
+                'quantity': product.quantity,
+            }
+            for product in products
+        ]
+        return JsonResponse({'products': product_data})
+
     return render(request, 'add_sale.html', {
         'products': products,
         'sale': sale,
     })
-
 
 
 def sale_list(request):
@@ -941,7 +1079,5 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
     form_class = CustomSetPasswordForm
     template_name = 'registration/password_reset_confirm.html'  # Your custom template for reset confirmation
     success_url = reverse_lazy('password_reset_complete')  # Redirect after successful password reset
-
-
 
 
